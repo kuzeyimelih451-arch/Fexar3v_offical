@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>fexar3v_offical</title>
+
+<style>
+body {
+  margin:0;
+  background:#0f0f0f;
+  color:white;
+  font-family:Arial;
+}
+.container {
+  max-width:800px;
+  margin:auto;
+  padding:20px;
+}
+h1,h2 {
+  text-align:center;
+}
+input, textarea, button {
+  width:100%;
+  margin-top:8px;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+}
+button {
+  background:#4caf50;
+  color:white;
+  cursor:pointer;
+}
+.card {
+  background:#1c1c1c;
+  padding:15px;
+  margin-top:15px;
+  border-radius:10px;
+}
+.small {
+  font-size:12px;
+  color:#aaa;
+}
+.comment {
+  background:#2a2a2a;
+  padding:8px;
+  margin-top:5px;
+  border-radius:6px;
+}
+.actions button {
+  width:auto;
+  margin-right:5px;
+  background:#333;
+}
+hr {
+  margin:30px 0;
+  border:1px solid #333;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>📢 fexar3v_offical</h1>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLogin">
+  <input id="adminPass" type="password" placeholder="Admin şifresi">
+  <button onclick="login()">Giriş</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" style="display:none">
+  <h2>✍ Gönderi</h2>
+  <textarea id="postText" placeholder="Kısa gönderi / haber yaz..."></textarea>
+  <button onclick="addPost()">Gönderi Paylaş</button>
+
+  <h2>📖 Hikâye</h2>
+  <input id="storyTitle" placeholder="Hikâye başlığı">
+  <textarea id="storyText" placeholder="Uzun hikâye yaz..."></textarea>
+  <button onclick="addStory()">Hikâye Paylaş</button>
+</div>
+
+<hr>
+
+<h2>📰 Gönderiler</h2>
+<div id="posts"></div>
+
+<hr>
+
+<h2>📚 Hikâyeler</h2>
+<div id="stories"></div>
+
+</div>
+
+<script>
+const ADMIN_PASS = "fexar3v";
+let isAdmin = false;
+
+let posts = JSON.parse(localStorage.getItem("posts")) || [];
+let stories = JSON.parse(localStorage.getItem("stories")) || [];
+
+function save() {
+  localStorage.setItem("posts", JSON.stringify(posts));
+  localStorage.setItem("stories", JSON.stringify(stories));
+}
+
+function login() {
+  if (adminPass.value === ADMIN_PASS) {
+    isAdmin = true;
+    adminLogin.style.display = "none";
+    adminPanel.style.display = "block";
+  } else {
+    alert("Yanlış şifre");
+  }
+}
+
+function addPost() {
+  if (!postText.value.trim()) return;
+  posts.push({
+    text: postText.value,
+    time: new Date().toLocaleString("tr-TR"),
+    likes: 0,
+    comments: []
+  });
+  postText.value = "";
+  save(); render();
+}
+
+function addStory() {
+  if (!storyText.value.trim()) return;
+  stories.push({
+    title: storyTitle.value || "Başlıksız",
+    text: storyText.value,
+    time: new Date().toLocaleString("tr-TR"),
+    likes: 0,
+    comments: []
+  });
+  storyTitle.value = "";
+  storyText.value = "";
+  save(); render();
+}
+
+function like(type,i) {
+  type[i].likes++;
+  save(); render();
+}
+
+function del(type,i) {
+  if (!isAdmin) return;
+  type.splice(i,1);
+  save(); render();
+}
+
+function comment(type,i,input) {
+  if (!input.value.trim()) return;
+  type[i].comments.push(input.value);
+  input.value="";
+  save(); render();
+}
+
+function render() {
+  postsDiv.innerHTML="";
+  storiesDiv.innerHTML="";
+
+  posts.slice().reverse().forEach((p,i)=>{
+    let ri = posts.length-1-i;
+    postsDiv.innerHTML += `
+    <div class="card">
+      <div>${p.text}</div>
+      <div class="small">${p.time}</div>
+      <div class="actions">
+        <button onclick="like(posts,${ri})">❤️ ${p.likes}</button>
+        ${isAdmin?`<button onclick="del(posts,${ri})">🗑</button>`:""}
+      </div>
+      <input placeholder="Yorum yaz..."
+        onkeydown="if(event.key==='Enter') comment(posts,${ri},this)">
+      ${p.comments.map(c=>`<div class="comment">${c}</div>`).join("")}
+    </div>`;
+  });
+
+  stories.slice().reverse().forEach((s,i)=>{
+    let ri = stories.length-1-i;
+    storiesDiv.innerHTML += `
+    <div class="card">
+      <h3>${s.title}</h3>
+      <div>${s.text.replace(/\n/g,"<br>")}</div>
+      <div class="small">${s.time}</div>
+      <div class="actions">
+        <button onclick="like(stories,${ri})">❤️ ${s.likes}</button>
+        ${isAdmin?`<button onclick="del(stories,${ri})">🗑</button>`:""}
+      </div>
+      <input placeholder="Yorum yaz..."
+        onkeydown="if(event.key==='Enter') comment(stories,${ri},this)">
+      ${s.comments.map(c=>`<div class="comment">${c}</div>`).join("")}
+    </div>`;
+  });
+}
+
+render();
+</script>
+</body>
+</html>
